@@ -31,28 +31,57 @@ fn main() -> ! {
     let mut state = [false, false];
     let mut key = 69u8;
     let mut playing = true;
+    let mut tick = 0u64;
+    let mut tick_accel = 5u64;
 
     loop {
+        let old_key = key;
         let new_state: [bool; 2] =
             core::array::from_fn(|b| buttons[b].is_low().unwrap());
         match new_state {
-            [true, false] if new_state != state => {
-                key = key.saturating_sub(1);
-            }
-            [false, true] if new_state != state => {
-                key = (key + 1).min(127);
-            }
-            [true, true] if new_state != state => {
-                playing = !playing;
-                if playing {
-                    pwm.enable();
+            [true, false] => {
+                if state == new_state {
+                    if tick < tick_accel {
+                        tick += 1;
+                    } else {
+                        key = key.saturating_sub(1);
+                        tick = 0;
+                        tick_accel = (tick_accel - 1).max(1);
+                    }
                 } else {
-                    pwm.disable();
+                    key = key.saturating_sub(1);
+                    tick = 0;
+                    tick_accel = 5;
                 }
             }
-            _ => (),
+            [false, true] => {
+                if state == new_state {
+                    if tick < tick_accel {
+                        tick += 1;
+                    } else {
+                        key = (key + 1).min(127);
+                        tick = 0;
+                        tick_accel = (tick_accel - 1).max(1);
+                    }
+                } else {
+                    key = (key + 1).min(127);
+                    tick = 0;
+                    tick_accel = 5;
+                }
+            }
+            [true, true] => {
+                if new_state != state {
+                    playing = !playing;
+                    if playing {
+                        pwm.enable();
+                    } else {
+                        pwm.disable();
+                    }
+                }
+            }
+            [false, false] => (),
         }
-        if state != new_state {
+        if state != new_state || key != old_key {
             rprintln!(
                 "playing: {:?}, buttons: {:?}, key: {}",
                 playing, new_state, key,
