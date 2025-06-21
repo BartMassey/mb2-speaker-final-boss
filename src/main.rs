@@ -30,67 +30,102 @@ fn main() -> ! {
 
     let mut state = [false, false];
     let mut key = 69u8;
-    let mut playing = true;
+    let mut width = 50u8;
     let mut tick = 0u64;
     let mut tick_accel = 5u64;
 
+    const MODE_OFF: u8 = 0;
+    const MODE_FREQ: u8 = 1;
+    const MODE_WIDTH: u8 = 2;
+    const NMODES: u8 = 3;
+    let mut playing = MODE_FREQ;
+
     loop {
         let old_key = key;
+        let old_width = width;
         let new_state: [bool; 2] =
             core::array::from_fn(|b| buttons[b].is_low().unwrap());
         match new_state {
             [true, false] => {
+                if state != new_state || tick >= tick_accel {
+                    match playing {
+                        MODE_FREQ => {
+                            // key 35 is min for 50% cycle.
+                            // key 16 is min for working at all.
+                            key = (key - 1).max(16);
+                        }
+                        MODE_WIDTH => {
+                            width = (width - 1).max(1);
+                        }
+                        _ => (),
+                    }
+                }
                 if state == new_state {
                     if tick < tick_accel {
                         tick += 1;
                     } else {
-                        key = key.saturating_sub(1);
                         tick = 0;
                         tick_accel = (tick_accel - 1).max(1);
                     }
                 } else {
-                    key = key.saturating_sub(1);
                     tick = 0;
                     tick_accel = 5;
                 }
             }
             [false, true] => {
+                if state != new_state || tick >= tick_accel {
+                    match playing {
+                        MODE_FREQ => {
+                            // key 35 is min for 50% cycle.
+                            // key 16 is min for working at all.
+                            key = (key + 1).min(127);
+                        }
+                        MODE_WIDTH => {
+                            width = (width + 1).min(50);
+                        }
+                        _ => (),
+                    }
+                }
                 if state == new_state {
                     if tick < tick_accel {
                         tick += 1;
                     } else {
-                        key = (key + 1).min(127);
                         tick = 0;
                         tick_accel = (tick_accel - 1).max(1);
                     }
                 } else {
-                    key = (key + 1).min(127);
                     tick = 0;
                     tick_accel = 5;
                 }
             }
             [true, true] => {
                 if new_state != state {
-                    playing = !playing;
-                    if playing {
-                        pwm.enable();
-                    } else {
+                    playing = (playing + 1) % NMODES;
+                    if playing == MODE_OFF {
                         pwm.disable();
+                    } else {
+                        pwm.enable();
                     }
                 }
             }
             [false, false] => (),
         }
-        if playing {
+        if playing != MODE_OFF {
             let f = keytones::key_to_frequency(key).round() as u32;
+            let w = (pwm.max_duty() as f32 * width as f32 / 100.0).floor() as u16;
             pwm
                 .set_period(time::Hertz(f))
-                .set_duty_on_common(pwm.max_duty() / 2);
+                .set_duty_on_common(w);
 
-            if state != new_state || key != old_key {
+            if state != new_state || key != old_key || width != old_width {
+                let mode_name = match playing {
+                    MODE_FREQ => "freq",
+                    MODE_WIDTH => "width",
+                    _ => panic!("unexpected mode"),
+                };
                 rprintln!(
-                    "playing: {:?}, buttons: {:?}, key: {}, f: {}, d: {}",
-                    playing, new_state, key, f, pwm.max_duty(),
+                    "mode: {}, f: {} (key: {}), width: {} (d: {}, w: {})",
+                    mode_name, f, key, width, pwm.max_duty(), w,
                 );
             }
         }
