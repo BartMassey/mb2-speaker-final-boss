@@ -25,7 +25,7 @@ fn main() -> ! {
 
     pwm
         .set_output_pin(pwm::Channel::C0, speaker_pin)
-        .set_prescaler(pwm::Prescaler::Div2)
+        .set_prescaler(pwm::Prescaler::Div16)
         .set_counter_mode(pwm::CounterMode::UpAndDown);
 
     let mut state = [false, false];
