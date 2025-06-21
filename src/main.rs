@@ -81,21 +81,21 @@ fn main() -> ! {
             }
             [false, false] => (),
         }
-        if state != new_state || key != old_key {
-            rprintln!(
-                "playing: {:?}, buttons: {:?}, key: {}",
-                playing, new_state, key,
-            );
-        }
-        state = new_state;
-
         if playing {
             let f = keytones::key_to_frequency(key).round() as u32;
             pwm
                 .set_period(time::Hertz(f))
                 .set_duty_on_common(pwm.max_duty() / 2);
+
+            if state != new_state || key != old_key {
+                rprintln!(
+                    "playing: {:?}, buttons: {:?}, key: {}, f: {}, d: {}",
+                    playing, new_state, key, f, pwm.max_duty(),
+                );
+            }
         }
         
+        state = new_state;
         timer.delay_ms(100);
     }
 }
