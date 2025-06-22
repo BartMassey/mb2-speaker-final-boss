@@ -201,8 +201,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f9fbbcab51052fe104eb5e5d351cf728d30a5be1fe14d9be8a3b097481fb97de"
 
 [[package]]
-name = "mb2-game-audio"
-version = "0.3.0"
+name = "mb2-speaker-final-boss"
+version = "0.1.0"
 dependencies = [
  "cortex-m",
  "cortex-m-rt",
@@ -211,6 +211,7 @@ dependencies = [
  "keytones",
  "microbit-v2",
  "nrf52833-hal",
+ "num-traits",
  "panic-rtt-target",
  "rtt-target",
 ]
