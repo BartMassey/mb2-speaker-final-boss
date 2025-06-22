@@ -20,3 +20,6 @@ features = ["critical-section-single-core", "inline-asm"]
 version = "0.2"
 git = "https://github.com/BartMassey/keytones"
 default-features = false
+
+[features]
+div1 = []

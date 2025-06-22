@@ -23,9 +23,13 @@ fn main() -> ! {
         board.buttons.button_b.degrade().into_floating_input(),
     ];
 
+    #[cfg(feature = "div1")]
+    let div = pwm::Prescaler::Div1;
+    #[cfg(not(feature = "div1"))]
+    let div = pwm::Prescaler::Div16;
     pwm
         .set_output_pin(pwm::Channel::C0, speaker_pin)
-        .set_prescaler(pwm::Prescaler::Div16)
+        .set_prescaler(div)
         .set_counter_mode(pwm::CounterMode::UpAndDown);
 
     let mut state = [false, false];
@@ -52,9 +56,18 @@ fn main() -> ! {
                 if state != new_state || tick >= tick_accel {
                     match playing {
                         MODE_FREQ => {
+                            // Div1:
+                            // key 59 is min.
+                            #[cfg(feature="div1")]
+                            let lower = 59;
+
+                            // Div16:
                             // key 35 is min for 50% cycle.
                             // key 16 is min for working at all.
-                            key = (key - 1).max(16);
+                            #[cfg(not(feature="div1"))]
+                            let lower = 16;
+                            
+                            key = (key - 1).max(lower);
                         }
                         MODE_WIDTH => {
                             width = (width - 1).max(1);
