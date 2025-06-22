@@ -43,6 +43,8 @@ fn main() -> ! {
     loop {
         let old_key = key;
         let old_width = width;
+        let old_playing = playing;
+
         let new_state: [bool; 2] =
             core::array::from_fn(|b| buttons[b].is_low().unwrap());
         match new_state {
@@ -110,24 +112,26 @@ fn main() -> ! {
             }
             [false, false] => (),
         }
+        let f = keytones::key_to_frequency(key).round() as u32;
+        let w = (pwm.max_duty() as f32 * width as f32 / 100.0).floor() as u16;
         if playing != MODE_OFF {
-            let f = keytones::key_to_frequency(key).round() as u32;
-            let w = (pwm.max_duty() as f32 * width as f32 / 100.0).floor() as u16;
             pwm
                 .set_period(time::Hertz(f))
                 .set_duty_on_common(w);
+        }
 
-            if state != new_state || key != old_key || width != old_width {
-                let mode_name = match playing {
-                    MODE_FREQ => "freq",
-                    MODE_WIDTH => "width",
-                    _ => panic!("unexpected mode"),
-                };
-                rprintln!(
-                    "mode: {}, f: {} (key: {}), width: {} (d: {}, w: {})",
-                    mode_name, f, key, width, pwm.max_duty(), w,
-                );
-            }
+        let changed = playing != old_playing || key != old_key || width != old_width;
+        if changed {
+            let mode_name = match playing {
+                MODE_FREQ => "freq",
+                MODE_WIDTH => "width",
+                MODE_OFF => "off",
+                _ => panic!("unexpected mode"),
+            };
+            rprintln!(
+                "mode: {}, f: {} (key: {}), width: {} (d: {}, w: {})",
+                mode_name, f, key, width, pwm.max_duty(), w,
+            );
         }
         
         state = new_state;
