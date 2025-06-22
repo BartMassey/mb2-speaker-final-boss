@@ -45,7 +45,12 @@ fn main() -> ! {
         .set_counter_mode(counter_mode);
 
     let mut state = [false, false];
+
+    #[cfg(feature = "div1")]
+    let mut key = 128u8;
+    #[cfg(not(feature = "div1"))]
     let mut key = 69u8;
+
     let mut width = 50u8;
     let mut tick = 0u64;
     let mut tick_accel = 5u64;
@@ -103,9 +108,14 @@ fn main() -> ! {
                 if state != new_state || tick >= tick_accel {
                     match playing {
                         MODE_FREQ => {
-                            // key 35 is min for 50% cycle.
-                            // key 16 is min for working at all.
-                            key = (key + 1).min(127);
+
+                            // "key 128" is 20Khz
+                            #[cfg(feature = "div1")]
+                            let upper = 128;
+                            #[cfg(not(feature = "div1"))]
+                            let upper = 127;
+
+                            key = (key + 1).min(upper);
                         }
                         MODE_WIDTH => {
                             width = (width + 1).min(99);
@@ -137,8 +147,14 @@ fn main() -> ! {
             }
             [false, false] => (),
         }
-        let f = keytones::key_to_frequency(key).round() as u32;
+
+        let f = if key == 128 {
+            20_000
+        } else {
+            keytones::key_to_frequency(key).round() as u32
+        };
         let w = (pwm.max_duty() as f32 * width as f32 / 100.0).floor() as u16;
+
         if playing != MODE_OFF {
             pwm.set_period(time::Hertz(f));
 
