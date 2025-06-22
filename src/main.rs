@@ -13,8 +13,14 @@ use rtt_target::{rtt_init_print, rprintln};
 fn main() -> ! {
     rtt_init_print!();
     let board = Board::take().unwrap();
-    let speaker_pin = board.speaker_pin
-        .into_push_pull_output(gpio::Level::High)
+
+    #[cfg(feature="ext")]
+    let speaker_pin = board.edge.e00;
+    #[cfg(not(feature="ext"))]
+    let speaker_pin = board.speaker_pin;
+
+    let speaker_pin = speaker_pin
+        .into_push_pull_output(gpio::Level::Low)
         .degrade();
     let mut timer = timer::Timer::new(board.TIMER0);
     let pwm = pwm::Pwm::new(board.PWM0);
@@ -27,10 +33,16 @@ fn main() -> ! {
     let div = pwm::Prescaler::Div1;
     #[cfg(not(feature = "div1"))]
     let div = pwm::Prescaler::Div16;
+
+    #[cfg(feature = "up")]
+    let counter_mode = pwm::CounterMode::Up;
+    #[cfg(not(feature = "up"))]
+    let counter_mode = pwm::CounterMode::UpAndDown;
+
     pwm
         .set_output_pin(pwm::Channel::C0, speaker_pin)
         .set_prescaler(div)
-        .set_counter_mode(pwm::CounterMode::UpAndDown);
+        .set_counter_mode(counter_mode);
 
     let mut state = [false, false];
     let mut key = 69u8;
@@ -96,7 +108,7 @@ fn main() -> ! {
                             key = (key + 1).min(127);
                         }
                         MODE_WIDTH => {
-                            width = (width + 1).min(50);
+                            width = (width + 1).min(99);
                         }
                         _ => (),
                     }
@@ -128,9 +140,12 @@ fn main() -> ! {
         let f = keytones::key_to_frequency(key).round() as u32;
         let w = (pwm.max_duty() as f32 * width as f32 / 100.0).floor() as u16;
         if playing != MODE_OFF {
-            pwm
-                .set_period(time::Hertz(f))
-                .set_duty_on_common(w);
+            pwm.set_period(time::Hertz(f));
+
+            #[cfg(feature = "invert")]
+            pwm.set_duty_on_common(w);
+            #[cfg(not(feature = "invert"))]
+            pwm.set_duty_off_common(w);
         }
 
         let changed = playing != old_playing || key != old_key || width != old_width;
