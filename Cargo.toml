@@ -1,6 +1,6 @@
 [package]
-name = "mb2-game-audio"
-version = "0.3.0"
+name = "mb2-speaker-final-boss"
+version = "0.1.0"
 edition = "2024"
 
 [dependencies]
