@@ -4,7 +4,7 @@
 use panic_rtt_target as _;
 
 use cortex_m_rt::entry;
-use embedded_hal::delay::DelayNs;
+use embedded_hal::{delay::DelayNs, digital::InputPin};
 use num_traits::float::Float;
 use microbit::{Board, hal::{gpio, pwm, time, timer}};
 
@@ -17,6 +17,7 @@ fn main() -> ! {
     #[cfg(not(feature="ext"))]
     let speaker_pin = board.speaker_pin;
 
+    let mut button_a = board.buttons.button_a.into_floating_input();
     let speaker_pin = speaker_pin
         .into_push_pull_output(gpio::Level::Low)
         .degrade();
@@ -36,7 +37,9 @@ fn main() -> ! {
     let width_high = (duty * 0.1).floor() as u16;
     let width_low = (duty * 0.9).floor() as u16;
     loop {
-        let width = if high {
+        let width = if button_a.is_high().unwrap() {
+            0
+        } else if high {
             width_high
         } else {
             width_low
