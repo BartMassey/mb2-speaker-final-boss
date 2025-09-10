@@ -209,9 +209,9 @@ dependencies = [
  "critical-section-lock-mut",
  "embedded-hal 1.0.0",
  "keytones",
+ "libm",
  "microbit-v2",
  "nrf52833-hal",
- "num-traits",
  "panic-rtt-target",
  "rtt-target",
 ]

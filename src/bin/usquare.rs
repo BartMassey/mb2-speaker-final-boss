@@ -5,7 +5,6 @@ use panic_rtt_target as _;
 
 use cortex_m_rt::entry;
 use embedded_hal::{delay::DelayNs, digital::InputPin};
-use num_traits::float::Float;
 use microbit::{Board, hal::{gpio, pwm, time, timer}};
 
 #[entry]
@@ -34,8 +33,8 @@ fn main() -> ! {
 
     let mut high = true;
     let duty = pwm.max_duty() as f32;
-    let width_high = (duty * 0.1).floor() as u16;
-    let width_low = (duty * 0.9).floor() as u16;
+    let width_high = (duty * 0.1) as u16;
+    let width_low = (duty * 0.9) as u16;
     loop {
         let width = if button_a.is_high().unwrap() {
             0
