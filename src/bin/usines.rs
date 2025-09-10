@@ -5,8 +5,9 @@ use panic_rtt_target as _;
 
 use core::f32::consts::PI;
 use cortex_m_rt::entry;
-use microbit::{Board, hal::{gpio, pwm, time}, pac::interrupt};
 use libm::sinf;
+use microbit::{Board, hal::{gpio, pwm, time}, pac::interrupt};
+use rtt_target::{rtt_init_print, rprintln};
 
 /// This has to be in RAM for the PWM unit to access it. It
 /// needs to be a 16-bit buffer, independent of sample resolution.
@@ -37,6 +38,7 @@ unsafe fn fill_array(duty: f32, a: *mut [u16; BLOCK_SIZE]) {
 
 #[entry]
 fn main() -> ! {
+    rtt_init_print!();
     let board = Board::take().unwrap();
 
     #[cfg(feature="ext")]
@@ -86,6 +88,7 @@ fn main() -> ! {
         .enable();
 
     let duty = pwm.max_duty() as f32;
+    rprintln!("{} {}", BLOCK_SIZE, duty);
 
     let dma = cortex_m::interrupt::free(|_cs| {
         /* Enable PWM interrupts */

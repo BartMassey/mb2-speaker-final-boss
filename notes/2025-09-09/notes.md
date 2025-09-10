@@ -15,6 +15,11 @@ frequency domain [usquare-spectrum] was noisy in the extreme
 (although my recording environment was very loud). It looked
 like the signal was ringing heavily.
 
+Rewrote the square-wave generator into a two-sine-wave
+generator. That worked poorly: the harmonic is inaudible
+both on the MB2 speaker and on the external output. Gave up
+for now.
+
 [mb2-audio-experiments]: https://github.com/pdx-cs-rust-embedded/mb2-audio-experiments
 [mb2-linus-audio]: audio/mb2-linus-audio.wav
 [mb2-usquare-audio]: audio/mb2-usquare-audio.wav
